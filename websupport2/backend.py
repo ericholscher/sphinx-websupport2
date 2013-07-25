@@ -16,7 +16,10 @@ class WebStorage(StorageBackend):
         url = "http://localhost:8000/websupport/_has_node"
         data = {'node_id': id,}
         r = requests.get(url, params=data)
-        return r.json['exists']
+        if r.status_code is 200:
+            return r.json()['exists']
+        else:
+            return False
 
     def add_node(self, id, document, source):
         url = "http://localhost:8000/websupport/_add_node"

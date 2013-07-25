@@ -6,7 +6,7 @@ from sphinx.util import copy_static_entry
 from sphinx.util.console import bold
 from sphinx.util.osutil import copyfile
 from translator import UUIDTranslator
-from websupport2.backend import WebStorage
+from backend import WebStorage
 
 import os
 
