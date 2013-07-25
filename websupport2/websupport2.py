@@ -25,7 +25,6 @@ def copy_media(app, exception):
         ctx = app.builder.globalcontext
         ctx['websupport2_base_url'] = app.builder.config.websupport2_base_url
         copy_static_entry(source, dest_dir, app.builder, ctx)
-        #copyfile(source, dest)
         app.info('done')
 
 
