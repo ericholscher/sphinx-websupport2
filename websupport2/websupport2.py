@@ -23,7 +23,6 @@ def copy_media(app, exception):
             file
         )
         ctx = app.builder.globalcontext
-        import ipdb; ipdb.set_trace()
         ctx['websupport2_base_url'] = app.builder.config.websupport2_base_url
         copy_static_entry(source, dest_dir, app.builder, ctx)
         app.info('done')
