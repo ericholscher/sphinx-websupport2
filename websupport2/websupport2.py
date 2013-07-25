@@ -4,7 +4,6 @@
 from sphinx.builders.html import StandaloneHTMLBuilder
 from sphinx.util import copy_static_entry
 from sphinx.util.console import bold
-from sphinx.util.osutil import copyfile
 from translator import UUIDTranslator
 from backend import WebStorage
 
@@ -16,7 +15,6 @@ def copy_media(app, exception):
     for file in ['websupport2.css', 'websupport2.js_t']:
         app.info(bold('Copying %s... ' % file), nonl=True)
         dest_dir = os.path.join(app.builder.outdir, '_static')
-        dest = os.path.join(dest_dir, file)
         source = os.path.join(
             os.path.abspath(os.path.dirname(__file__)), 
             '_static', 
@@ -24,11 +22,12 @@ def copy_media(app, exception):
         )
         ctx = app.builder.globalcontext
         ctx['websupport2_base_url'] = app.builder.config.websupport2_base_url
+        ctx['websupport2_static_url'] = app.builder.config.websupport2_static_url
         copy_static_entry(source, dest_dir, app.builder, ctx)
         app.info('done')
 
 
-class UUIDBuilder(StandaloneHTMLBuilder):
+class Websupport2Builder(StandaloneHTMLBuilder):
     """
     Builds documents for the web support package.
     """
@@ -48,6 +47,7 @@ class UUIDBuilder(StandaloneHTMLBuilder):
         self.translator_class = UUIDTranslator
 
 def setup(app):
-    app.add_builder(UUIDBuilder)
+    app.add_builder(Websupport2Builder)
     app.connect('build-finished', copy_media)
     app.add_config_value('websupport2_base_url', 'http://localhost:8000/websupport', 'html')
+    app.add_config_value('websupport2_static_url', 'http://localhost:8000/static', 'html')

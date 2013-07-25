@@ -52,10 +52,24 @@
   }
 
   function initMetaData() {
+    var get_data = {};
+    // Try and figure out the page we're working on.
+    if (typeof page_name != "undefined") {
+        get_data["page_name"] = page_name
+    }
+    else {
+        get_data["page_name"] = window.location.pathname.substring(1)
+    }
+
+    // Read the Docs sets these variables above in the Javascript stack
+    if (typeof doc_version != "undefined" && typeof doc_slug != "undefined") {
+        get_data["version"] = doc_version
+        get_data["project"] = doc_slug
+    }
     $.ajax({
      type: 'GET',
      url: opts.metadataURL,
-     data: {document: page_name},
+     data: get_data,
 
      success: function(data, textStatus, request) {
         COMMENT_METADATA = data
@@ -66,7 +80,7 @@
      error: function(request, textStatus, error) {
        showError('Oops, there was a problem retrieving comment metadata.');
      },
-     dataType: 'json'
+     dataType: 'jsonp'
     });
   }
 
@@ -81,7 +95,7 @@
      error: function(request, textStatus, error) {
        showError('Oops, there was a problem retrieving the comment options.');
      },
-     dataType: 'json'
+     dataType: 'jsonp'
     });
   }
 
@@ -703,7 +717,9 @@
     });
   };
 
-  baseURL = "{{ websupport2_base_url }}";
+  var baseURL = "{{ websupport2_base_url }}";
+  var staticURL = "{{ websupport2_static_url }}";
+
   var opts = {
     processVoteURL: baseURL + '/_process_vote',
     addCommentURL: baseURL + '/_add_comment',
@@ -713,14 +729,14 @@
     metadataURL: baseURL + '/_get_metadata',
     optionsURL: baseURL + '/_get_options',
 
-    commentImage: '/static/_static/comment.png',
-    closeCommentImage: '/static/_static/comment-close.png',
-    loadingImage: '/static/_static/ajax-loader.gif',
-    commentBrightImage: '/static/_static/comment-bright.png',
-    upArrow: '/static/_static/up.png',
-    downArrow: '/static/_static/down.png',
-    upArrowPressed: '/static/_static/up-pressed.png',
-    downArrowPressed: '/static/_static/down-pressed.png',
+    commentImage: staticURL + '/_static/comment.png',
+    closeCommentImage: staticURL + '/_static/comment-close.png',
+    loadingImage: staticURL + '/_static/ajax-loader.gif',
+    commentBrightImage: staticURL + '/_static/comment-bright.png',
+    upArrow: staticURL + '/_static/up.png',
+    downArrow: staticURL + '/_static/down.png',
+    upArrowPressed: staticURL + '/_static/up-pressed.png',
+    downArrowPressed: staticURL + '/_static/down-pressed.png',
 
     voting: false,
     moderator: false
