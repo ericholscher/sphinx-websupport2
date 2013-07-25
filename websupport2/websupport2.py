@@ -33,9 +33,17 @@ class Websupport2Builder(StandaloneHTMLBuilder):
     """
     name = 'websupport2'
     versioning_method = 'commentable'
+    slug = None
+    version = None
 
     def init(self):
         StandaloneHTMLBuilder.init(self)
+
+        config = self.config
+        if config.has_key('current_version'):
+            self.version = self.config.context['current_version']
+        if config.has_key('slug'):
+            self.slug = self.config.context['slug']
 
         self.storage = WebStorage(builder=self)
 

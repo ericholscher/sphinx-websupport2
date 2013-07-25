@@ -16,9 +16,16 @@ class WebStorage(StorageBackend):
         self.builder = builder
         self.url = self.builder.config.websupport2_base_url
 
+    def _add_server_data(self, data):
+        if self.version:
+            data['version'] = self.version
+        if self.slug:
+            data['project'] = self.slug
+
     def has_node(self, id):
         url = self.url + "/_has_node"
         data = {'node_id': id,}
+        self._add_server_data(data)
         r = requests.get(url, params=data)
         if r.status_code is 200:
             return r.json()['exists']
@@ -27,7 +34,12 @@ class WebStorage(StorageBackend):
 
     def add_node(self, id, document, source):
         url = self.url + "/_add_node"
-        data = {'id': id, 'document': document, 'source': source}
+        data = {
+            'id': id, 
+            'document': document, 
+            'source': source
+        }
+        self._add_server_data(data)
         headers = {'Content-type': 'application/json'}
-        r = requests.post(url, data=json.dumps(data), headers=headers)
+        requests.post(url, data=json.dumps(data), headers=headers)
         return True

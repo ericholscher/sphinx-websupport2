@@ -51,7 +51,7 @@
     initMetaData();
   }
 
-  function initMetaData() {
+  function getServerData() {
     var get_data = {};
     // Try and figure out the page we're working on.
     if (typeof page_name != "undefined") {
@@ -66,6 +66,12 @@
         get_data["version"] = doc_version
         get_data["project"] = doc_slug
     }
+    return get_data
+  }
+
+  function initMetaData() {
+    var get_data = getServerData()
+
     $.ajax({
      type: 'GET',
      url: opts.metadataURL,
@@ -85,10 +91,12 @@
   }
 
   function initOptions() {
+    var get_data = getServerData()
+
     $.ajax({
      type: 'GET',
      url: opts.optionsURL,
-     //data: {},
+     data: get_data,
      success: function(data, textStatus, request) {
       COMMENT_OPTIONS = data
      },
@@ -229,10 +237,13 @@
    * and insert the comments into the comments tree.
    */
   function getComments(id) {
+    var get_data = getServerData();
+    get_data['node'] = id;
+
     $.ajax({
      type: 'GET',
      url: opts.getCommentsURL,
-     data: {node: id},
+     data: get_data,
      success: function(data, textStatus, request) {
        var ul = $('#cl' + id);
        var speed = 100;
@@ -277,17 +288,23 @@
     // Disable the form that is being submitted.
     form.find('textarea,input').attr('disabled', 'disabled');
 
+
+    var server_data = getServerData();
+    var comment_data = {
+        node: node_id,
+        parent: parent_id,
+        text: text,
+        proposal: proposal
+      };
+    var post_data = $.extend(server_data, comment_data)
+
+
     // Send the comment to the server.
     $.ajax({
       type: "POST",
       url: opts.addCommentURL,
       dataType: 'json',
-      data: {
-        node: node_id,
-        parent: parent_id,
-        text: text,
-        proposal: proposal
-      },
+      data: post_data,
       success: function(data, textStatus, error) {
         // Reset the form.
         if (node_id) {
