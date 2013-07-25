@@ -12,8 +12,12 @@ class WebStorage(StorageBackend):
 
     """
 
+    def __init__(self, builder=None):
+        self.builder = builder
+        self.url = self.builder.config.websupport2_base_url
+
     def has_node(self, id):
-        url = "http://localhost:8000/websupport/_has_node"
+        url = self.url + "/_has_node"
         data = {'node_id': id,}
         r = requests.get(url, params=data)
         if r.status_code is 200:
@@ -22,7 +26,7 @@ class WebStorage(StorageBackend):
             return False
 
     def add_node(self, id, document, source):
-        url = "http://localhost:8000/websupport/_add_node"
+        url = self.url + "/_add_node"
         data = {'id': id, 'document': document, 'source': source}
         headers = {'Content-type': 'application/json'}
         r = requests.post(url, data=json.dumps(data), headers=headers)
