@@ -39,11 +39,12 @@ class Websupport2Builder(StandaloneHTMLBuilder):
     def init(self):
         StandaloneHTMLBuilder.init(self)
 
-        config = self.config
-        if config.has_key('current_version'):
-            self.version = self.config.context['current_version']
-        if config.has_key('slug'):
-            self.slug = self.config.context['slug']
+        # Pull project data from conf.py if it exists
+        context = self.config.html_context
+        if context.has_key('current_version'):
+            self.version = context['current_version']
+        if context.has_key('slug'):
+            self.project = context['slug']
 
         self.storage = WebStorage(builder=self)
 
