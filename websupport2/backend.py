@@ -17,9 +17,9 @@ class WebStorage(StorageBackend):
         self.url = self.builder.config.websupport2_base_url
 
     def _add_server_data(self, data):
-        if self.builder.version:
+        if hasattr(self.builder, 'version'):
             data['version'] = self.builder.version
-        if self.builder.project:
+        if hasattr(self.builder, 'project'):
             data['project'] = self.builder.project
 
     def has_node(self, id):

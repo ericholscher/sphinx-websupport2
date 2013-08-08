@@ -90,7 +90,7 @@
      error: function(request, textStatus, error) {
        showError('Oops, there was a problem retrieving comment metadata.');
      },
-     dataType: 'jsonp'
+     dataType: 'json'
     });
   }
 
@@ -107,7 +107,7 @@
      error: function(request, textStatus, error) {
        showError('Oops, there was a problem retrieving the comment options.');
      },
-     dataType: 'jsonp'
+     dataType: 'json'
     });
   }
 
@@ -271,7 +271,7 @@
      error: function(request, textStatus, error) {
        showError('Oops, there was a problem retrieving the comments.');
      },
-     dataType: 'jsonp'
+     dataType: 'json'
     });
   }
 
