@@ -51,7 +51,9 @@
     initMetaData();
   }
 
-  function getServerData() {
+  function getServerData(format) {
+    // Default format to json
+    format typeof format !== 'undefined' ? a : "json";
     var get_data = {};
     // Try and figure out the page we're working on.
     if (typeof page_name != "undefined") {
@@ -70,7 +72,7 @@
   }
 
   function initMetaData() {
-    var get_data = getServerData()
+    var get_data = getServerData("jsonp")
 
     $.ajax({
      type: 'GET',
@@ -91,7 +93,7 @@
   }
 
   function initOptions() {
-    var get_data = getServerData()
+    var get_data = getServerData("jsonp")
 
     $.ajax({
      type: 'GET',
@@ -237,7 +239,7 @@
    * and insert the comments into the comments tree.
    */
   function getComments(id) {
-    var get_data = getServerData();
+    var get_data = getServerData("jsonp")
     get_data['node'] = id;
 
     $.ajax({
