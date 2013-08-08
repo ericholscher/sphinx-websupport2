@@ -80,7 +80,15 @@
      type: 'GET',
      url: opts.metadataURL,
      data: get_data,
-
+     crossDomain: true,
+     xhrFields: {
+       // The 'xhrFields' property sets additional fields on the XMLHttpRequest.
+       // This can be used to set the 'withCredentials' property.
+       // Set the value to 'true' if you'd like to pass cookies to the server.
+       // If this is enabled, your server must respond with the header
+       // 'Access-Control-Allow-Credentials: true'.
+       withCredentials: true,
+     },
      success: function(data, textStatus, request) {
         COMMENT_METADATA = data
         // add comment anchors for all paragraphs that are commentable
@@ -101,6 +109,15 @@
      type: 'GET',
      url: opts.optionsURL,
      data: get_data,
+     crossDomain: true,
+     xhrFields: {
+       // The 'xhrFields' property sets additional fields on the XMLHttpRequest.
+       // This can be used to set the 'withCredentials' property.
+       // Set the value to 'true' if you'd like to pass cookies to the server.
+       // If this is enabled, your server must respond with the header
+       // 'Access-Control-Allow-Credentials: true'.
+       withCredentials: true,
+     },
      success: function(data, textStatus, request) {
       COMMENT_OPTIONS = data
      },
@@ -248,6 +265,15 @@
      type: 'GET',
      url: opts.getCommentsURL,
      data: get_data,
+     crossDomain: true,
+     xhrFields: {
+       // The 'xhrFields' property sets additional fields on the XMLHttpRequest.
+       // This can be used to set the 'withCredentials' property.
+       // Set the value to 'true' if you'd like to pass cookies to the server.
+       // If this is enabled, your server must respond with the header
+       // 'Access-Control-Allow-Credentials: true'.
+       withCredentials: true,
+     },
      success: function(data, textStatus, request) {
        var ul = $('#cl' + id);
        var speed = 100;
