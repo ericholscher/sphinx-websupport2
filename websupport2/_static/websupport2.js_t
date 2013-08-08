@@ -53,7 +53,9 @@
 
   function getServerData(format) {
     // Default format to json
-    format typeof format !== 'undefined' ? a : "json";
+    if typeof format === 'undefined' {
+      format = "json"
+    }
     var get_data = {};
     // Try and figure out the page we're working on.
     if (typeof page_name != "undefined") {
