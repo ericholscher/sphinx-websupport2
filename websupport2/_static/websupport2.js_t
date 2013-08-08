@@ -74,7 +74,7 @@
   }
 
   function initMetaData() {
-    var get_data = getServerData("jsonp")
+    var get_data = getServerData()
 
     $.ajax({
      type: 'GET',
@@ -95,7 +95,7 @@
   }
 
   function initOptions() {
-    var get_data = getServerData("jsonp")
+    var get_data = getServerData()
 
     $.ajax({
      type: 'GET',
@@ -241,7 +241,7 @@
    * and insert the comments into the comments tree.
    */
   function getComments(id) {
-    var get_data = getServerData("jsonp")
+    var get_data = getServerData()
     get_data['node'] = id;
 
     $.ajax({
