@@ -12,7 +12,7 @@ import os
 def copy_media(app, exception):
     if app.builder.name != 'websupport2' or exception:
         return
-    for file in ['websupport2.css', 'websupport2.js_t']:
+    for file in ['websupport2.css', 'websupport2.js_t', 'sphinxweb.css']:
         app.info(bold('Copying %s... ' % file), nonl=True)
         dest_dir = os.path.join(app.builder.outdir, '_static')
         source = os.path.join(
@@ -51,6 +51,7 @@ class Websupport2Builder(StandaloneHTMLBuilder):
         # add our custom bits
         self.script_files.append('_static/websupport2.js')
         self.css_files.append('_static/websupport2.css')
+        self.css_files.append('_static/sphinxweb.css')
 
     def init_translator_class(self):
         self.translator_class = UUIDTranslator
