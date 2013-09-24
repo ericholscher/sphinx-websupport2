@@ -9,10 +9,18 @@ from backend import WebStorage
 
 import os
 
+STATIC_FILES = [
+'websupport2.css', 
+'websupport2.js_t', 
+'sphinxweb.css',
+'jquery.pageslide.css',
+'jquery.pageslide.js',
+]
+
 def copy_media(app, exception):
     if app.builder.name != 'websupport2' or exception:
         return
-    for file in ['websupport2.css', 'websupport2.js_t', 'sphinxweb.css']:
+    for file in STATIC_FILES:
         app.info(bold('Copying %s... ' % file), nonl=True)
         dest_dir = os.path.join(app.builder.outdir, '_static')
         source = os.path.join(
