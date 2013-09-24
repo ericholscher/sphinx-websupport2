@@ -10,11 +10,11 @@ from backend import WebStorage
 import os
 
 STATIC_FILES = [
-'websupport2.css', 
-'websupport2.js_t', 
-'sphinxweb.css',
-'jquery.pageslide.css',
-'jquery.pageslide.js',
+    'websupport2.css', 
+    'websupport2.js_t', 
+    'sphinxweb.css',
+    'jquery.pageslide.css',
+    'jquery.pageslide.js',
 ]
 
 def copy_media(app, exception):
