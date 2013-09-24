@@ -50,8 +50,10 @@ class Websupport2Builder(StandaloneHTMLBuilder):
 
         # add our custom bits
         self.script_files.append('_static/websupport2.js')
+        self.script_files.append('_static/jquery.pageslide.js')
         self.css_files.append('_static/websupport2.css')
         self.css_files.append('_static/sphinxweb.css')
+        self.css_files.append('_static/jquery.pageslide.css')
 
     def init_translator_class(self):
         self.translator_class = UUIDTranslator

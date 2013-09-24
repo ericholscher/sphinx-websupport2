@@ -236,9 +236,11 @@
       addComment(form);
     });
     $('#s' + id).after(popup);
-    popup.slideDown('fast', function() {
-      getComments(id);
-    });
+    $(popup).pageslide();
+    getComments(id);
+    //popup.slideDown('fast', function() {
+      //getComments(id);
+    //});
   }
 
   /**
@@ -248,9 +250,10 @@
     $('#ah' + id).hide();
     $('#ao' + id).show();
     var div = $('#sc' + id);
-    div.slideUp('fast', function() {
-      div.remove();
-    });
+    $(div).pageslide();
+    //div.slideUp('fast', function() {
+      //div.remove();
+    //});
   }
 
   /**
@@ -267,11 +270,6 @@
      data: get_data,
      crossDomain: true,
      xhrFields: {
-       // The 'xhrFields' property sets additional fields on the XMLHttpRequest.
-       // This can be used to set the 'withCredentials' property.
-       // Set the value to 'true' if you'd like to pass cookies to the server.
-       // If this is enabled, your server must respond with the header
-       // 'Access-Control-Allow-Credentials: true'.
        withCredentials: true,
      },
      success: function(data, textStatus, request) {
