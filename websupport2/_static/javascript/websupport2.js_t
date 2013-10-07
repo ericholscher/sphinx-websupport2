@@ -1,0 +1,205 @@
+;(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+comm = require('./lib/comm')
+events = require('./lib/events')
+
+events.initEvents();
+comm.initOptions();
+comm.initMetaData();
+comm.getComments()
+
+
+},{"./lib/comm":2,"./lib/events":3}],2:[function(require,module,exports){
+module.exports = {
+  initMetaData: initMetaData,
+  getComments: getComments,
+  initOptions: initOptions
+}
+
+settings = require('./settings')
+
+function getServerData(format) {
+  return {
+    "project": page.project,
+    "version":  page.version,
+    "page": page.page
+  }
+}
+
+function initMetaData() {
+  var get_data = getServerData()
+
+  $.ajax({
+   type: 'GET',
+   url: settings.opts.metadataURL,
+   data: get_data,
+   crossDomain: true,
+   xhrFields: {
+     withCredentials: true,
+   },
+   success: function(data, textStatus, request) {
+      settings.metadata = data
+   },
+   error: function(request, textStatus, error) {
+     showError('Oops, there was a problem retrieving comment metadata.');
+   },
+  });
+}
+
+function initOptions() {
+  var get_data = getServerData()
+
+  $.ajax({
+   type: 'GET',
+   url: settings.opts.optionsURL,
+   data: get_data,
+   crossDomain: true,
+   xhrFields: {
+     withCredentials: true,
+   },
+   success: function(data, textStatus, request) {
+    settings.opts = jQuery.extend(settings.opts, data);
+   },
+   error: function(request, textStatus, error) {
+     showError('Oops, there was a problem retrieving the comment options.');
+   },
+  });
+}
+
+function getComments() {
+  var get_data = getServerData()
+  get_data['node'] = id;
+
+  $.ajax({
+   type: 'GET',
+   url: opts.getCommentsURL,
+   data: get_data,
+   crossDomain: true,
+   xhrFields: {
+     withCredentials: true,
+   },
+   success: handleComments,
+   error: function(request, textStatus, error) {
+     showError('Oops, there was a problem retrieving the comments.');
+   },
+   dataType: 'json'
+  });
+
+}
+
+function handleComments(data) {
+   if (data.comments.length === 0) {
+      console.log("No comments")
+   } else {
+     displayCommentIcon(data.comments)
+   }
+}
+
+function displayCommentIcon(data) {
+  // Cache stuff
+  cached_comments = true
+  cached_comment_data = data
+  // Only show data on the toc trees
+  for (index in top_list) {
+      obj = top_list[index]
+      var id = obj['id']
+      var count = settings.metadata[id];
+      var title = count + ' comment' + (count == 1 ? '' : 's');
+      var image = count > 0 ? settings.opts.commentBrightImage : settings.opts.commentImage;
+      addCommentIcon(id, title, image)
+  }
+}
+
+function addCommentIcon(id, title, image) {
+  $("#" + id)
+      .append(
+        $(document.createElement('a')).attr({
+          href: '#',
+          'class': 'sphinx-comment-open',
+          id: 'comment-open-' + id
+        })
+          .append($(document.createElement('img')).attr({
+            src: image,
+            alt: 'comment',
+            title: title
+          }))
+
+      )
+      .append(
+        $(document.createElement('a')).attr({
+          href: '#',
+          'class': 'sphinx-comment-close hidden',
+          id: 'comment-close-' + id
+        })
+          .append($(document.createElement('img')).attr({
+            src: settings.opts.closeCommentImage,
+            alt: 'close',
+            title: 'close'
+          }))
+      );
+}
+
+},{"./settings":4}],3:[function(require,module,exports){
+module.exports = {
+	initEvents: initEvents
+}
+
+function initEvents() {
+	$(document).on("click", "a.sphinx-comment-open", function(event) {
+		event.preventDefault();
+		displayComment($(this).attr('id').substring('comment-open-'.length));
+	})
+	$(document).on("click", "a.sphinx-comment-close", function(event) {
+		event.preventDefault();
+		closeComment($(this).attr('id').substring('comment-close-'.length));
+	})
+
+	$('a.reply').live("click", function(event) {
+	  event.preventDefault();
+	  openReply($(this).attr('id').substring(2));
+	});
+	$('a.close-reply').live("click", function(event) {
+	  event.preventDefault();
+	  closeReply($(this).attr('id').substring(2));
+	});
+	$('a.comment-markup').live("click", function(event) {
+	  event.preventDefault();
+	  toggleCommentMarkupBox($(this).attr('id').substring(2));
+	});
+}
+
+
+},{}],4:[function(require,module,exports){
+module.exports = {
+  metadata: metadata,
+  opts: opts
+}
+
+var baseURL = "{{ websupport2_base_url }}";
+var staticURL = "{{ websupport2_static_url }}";
+
+var metadata = {}
+
+var opts = {
+  processVoteURL: baseURL + '/_process_vote',
+  addCommentURL: baseURL + '/_add_comment',
+  getCommentsURL: baseURL + '/_get_comments',
+  acceptCommentURL: baseURL + '/_accept_comment',
+  deleteCommentURL: baseURL + '/_delete_comment',
+  metadataURL: baseURL + '/_get_metadata',
+  optionsURL: baseURL + '/_get_options',
+
+  commentImage: staticURL + '/_static/comment.png',
+  closeCommentImage: staticURL + '/_static/comment-close.png',
+  loadingImage: staticURL + '/_static/ajax-loader.gif',
+  commentBrightImage: staticURL + '/_static/comment-bright.png',
+  upArrow: staticURL + '/_static/up.png',
+  downArrow: staticURL + '/_static/down.png',
+  upArrowPressed: staticURL + '/_static/up-pressed.png',
+  downArrowPressed: staticURL + '/_static/down-pressed.png',
+
+  voting: false,
+  moderator: false
+};
+
+},{}]},{},[1])
+;

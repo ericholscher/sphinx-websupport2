@@ -11,7 +11,7 @@ import os
 
 STATIC_FILES = [
     'websupport2.css', 
-    'websupport2.js_t', 
+    'javascript/websupport2.js_t', 
     'sphinxweb.css',
     'jquery.pageslide.css',
     'jquery.pageslide.js',
@@ -57,7 +57,7 @@ class Websupport2Builder(StandaloneHTMLBuilder):
         self.storage = WebStorage(builder=self)
 
         # add our custom bits
-        self.script_files.append('_static/websupport2.js')
+        self.script_files.append('_static/javascript/websupport2.js')
         self.script_files.append('_static/jquery.pageslide.js')
         self.css_files.append('_static/websupport2.css')
         self.css_files.append('_static/sphinxweb.css')
