@@ -218,3 +218,9 @@ a.oid img {
     border: 1px solid #DDD;
     margin: 1em .5em 0;
 }
+
+#current-comment {
+    display: none;
+    background-color: white;
+    color: black;
+}

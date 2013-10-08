@@ -20,6 +20,7 @@ module.exports = {
 
 settings = require('./settings')
 page = require('./page')
+display = require('./display')
 
 function getServerData(format) {
   return {
@@ -78,16 +79,17 @@ function displayCommentIcon() {
       console.log(id + ": " + count)
       var title = count + ' comment' + (count == 1 ? '' : 's');
       var image = count > 0 ? settings.opts.commentBrightImage : settings.opts.commentImage;
-      addCommentIcon(id, title, image)
+      var addcls = count == 0 ? ' nocomment' : '';
+      addCommentIcon(id, title, image, addcls)
   }
 }
 
-function addCommentIcon(id, title, image) {
+function addCommentIcon(id, title, image, addcls) {
   $("#" + id)
       .append(
         $(document.createElement('a')).attr({
           href: '#',
-          'class': 'sphinx-comment-open',
+          'class': 'sphinx-comment-open' + addcls,
           id: 'comment-open-' + id
         })
         .append($(document.createElement('img')).attr({
@@ -144,9 +146,10 @@ function addComment(form) {
         .val('')
         .add(form.find('input'))
         .removeAttr('disabled');
-      //insertComment(data.comment);
+      display.showOneCommet($(".comment-list"), data)
       var comment_element = $('#' + node_id);
       comment_element.find('img').attr({'src': settings.opts.commentBrightImage});
+      comment_element.find('a').removeClass('nocomment');
     },
     error: function(request, textStatus, error) {
       form.find('textarea,input').removeAttr('disabled');
@@ -157,10 +160,11 @@ function addComment(form) {
 
 
 
-},{"./page":5,"./settings":6}],3:[function(require,module,exports){
+},{"./display":3,"./page":5,"./settings":6}],3:[function(require,module,exports){
 module.exports = {
     initDisplay: initDisplay,
     displayComments: displayComments,
+    showOneCommet: showOneCommet,
     closeComments: closeComments
 }
 
@@ -202,17 +206,14 @@ function handleComments(id, data) {
 }
 
 
-
 function showComments(id, comment_data) {
-  $('#current-comment').html("<h1> Comments </h1>")
+  element = $('#current-comment').html("<h1> Comments </h1>")
+  element.append("<div class='comment-list' id='current-comment-list'>")
   for (index in comment_data) {
       obj = comment_data[index]
-      console.log(obj)
-      to_append = "<span class='comment'>"
-      to_append += obj['date'] + "<br>"
-      to_append += obj['text']
-      $("#current-comment").append(to_append)
+      showOneCommet($(".comment-list"), obj)
   }
+  element.append("</div>")
   var reply = '\
       <div class="reply-div" id="comment-reply-' + id + '>">\
         <form class= "comment-reply-form" id="comment-reply-form-' + id + '">\
@@ -222,8 +223,20 @@ function showComments(id, comment_data) {
         </form>\
       </div>'
 
-  $("#current-comment").append(reply)
+  element.append("<div class='comment-div' id='current-comment-reply'>")
+  $(".comment-div").append(reply)
+  element.append("</div>")
   $.pageslide({direction: 'left', href:'#current-comment' })
+}
+
+function showOneCommet(element, comment) {
+    console.log("Displaying")
+    console.log(comment)
+      to_append = "<span class='comment'>"
+      to_append += comment['date'] + "<br>"
+      to_append += comment['text']
+      to_append += "</span>"
+      element.append(to_append)
 }
 
 // Don't need this since its in the page.

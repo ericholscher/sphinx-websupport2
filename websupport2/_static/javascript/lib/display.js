@@ -1,6 +1,7 @@
 module.exports = {
     initDisplay: initDisplay,
     displayComments: displayComments,
+    showOneCommet: showOneCommet,
     closeComments: closeComments
 }
 
@@ -42,17 +43,14 @@ function handleComments(id, data) {
 }
 
 
-
 function showComments(id, comment_data) {
-  $('#current-comment').html("<h1> Comments </h1>")
+  element = $('#current-comment').html("<h1> Comments </h1>")
+  element.append("<div class='comment-list' id='current-comment-list'>")
   for (index in comment_data) {
       obj = comment_data[index]
-      console.log(obj)
-      to_append = "<span class='comment'>"
-      to_append += obj['date'] + "<br>"
-      to_append += obj['text']
-      $("#current-comment").append(to_append)
+      showOneCommet($(".comment-list"), obj)
   }
+  element.append("</div>")
   var reply = '\
       <div class="reply-div" id="comment-reply-' + id + '>">\
         <form class= "comment-reply-form" id="comment-reply-form-' + id + '">\
@@ -62,8 +60,20 @@ function showComments(id, comment_data) {
         </form>\
       </div>'
 
-  $("#current-comment").append(reply)
+  element.append("<div class='comment-div' id='current-comment-reply'>")
+  $(".comment-div").append(reply)
+  element.append("</div>")
   $.pageslide({direction: 'left', href:'#current-comment' })
+}
+
+function showOneCommet(element, comment) {
+    console.log("Displaying")
+    console.log(comment)
+      to_append = "<span class='comment'>"
+      to_append += comment['date'] + "<br>"
+      to_append += comment['text']
+      to_append += "</span>"
+      element.append(to_append)
 }
 
 // Don't need this since its in the page.

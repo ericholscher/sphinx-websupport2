@@ -6,6 +6,7 @@ module.exports = {
 
 settings = require('./settings')
 page = require('./page')
+display = require('./display')
 
 function getServerData(format) {
   return {
@@ -64,16 +65,17 @@ function displayCommentIcon() {
       console.log(id + ": " + count)
       var title = count + ' comment' + (count == 1 ? '' : 's');
       var image = count > 0 ? settings.opts.commentBrightImage : settings.opts.commentImage;
-      addCommentIcon(id, title, image)
+      var addcls = count == 0 ? ' nocomment' : '';
+      addCommentIcon(id, title, image, addcls)
   }
 }
 
-function addCommentIcon(id, title, image) {
+function addCommentIcon(id, title, image, addcls) {
   $("#" + id)
       .append(
         $(document.createElement('a')).attr({
           href: '#',
-          'class': 'sphinx-comment-open',
+          'class': 'sphinx-comment-open' + addcls,
           id: 'comment-open-' + id
         })
         .append($(document.createElement('img')).attr({
@@ -130,9 +132,10 @@ function addComment(form) {
         .val('')
         .add(form.find('input'))
         .removeAttr('disabled');
-      //insertComment(data.comment);
+      display.showOneCommet($(".comment-list"), data)
       var comment_element = $('#' + node_id);
       comment_element.find('img').attr({'src': settings.opts.commentBrightImage});
+      comment_element.find('a').removeClass('nocomment');
     },
     error: function(request, textStatus, error) {
       form.find('textarea,input').removeAttr('disabled');
