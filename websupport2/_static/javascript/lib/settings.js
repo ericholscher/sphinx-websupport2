@@ -1,8 +1,3 @@
-module.exports = {
-  metadata: metadata,
-  opts: opts
-}
-
 var baseURL = "{{ websupport2_base_url }}";
 var staticURL = "{{ websupport2_static_url }}";
 
@@ -29,3 +24,11 @@ var opts = {
   voting: false,
   moderator: false
 };
+
+
+module.exports = {
+  metadata: metadata,
+  opts: opts,
+  staticURL: staticURL
+}
+

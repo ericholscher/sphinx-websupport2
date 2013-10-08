@@ -2,27 +2,21 @@ module.exports = {
 	initEvents: initEvents
 }
 
+display = require('./display')
+
 function initEvents() {
 	$(document).on("click", "a.sphinx-comment-open", function(event) {
 		event.preventDefault();
-		displayComment($(this).attr('id').substring('comment-open-'.length));
+		display.displayComments($(this).attr('id').substring('comment-open-'.length));
 	})
 	$(document).on("click", "a.sphinx-comment-close", function(event) {
 		event.preventDefault();
-		closeComment($(this).attr('id').substring('comment-close-'.length));
+		display.closeComments($(this).attr('id').substring('comment-close-'.length));
 	})
 
-	$('a.reply').live("click", function(event) {
-	  event.preventDefault();
-	  openReply($(this).attr('id').substring(2));
-	});
-	$('a.close-reply').live("click", function(event) {
-	  event.preventDefault();
-	  closeReply($(this).attr('id').substring(2));
-	});
-	$('a.comment-markup').live("click", function(event) {
-	  event.preventDefault();
-	  toggleCommentMarkupBox($(this).attr('id').substring(2));
-	});
+	$(document).on("submit", ".comment-reply-form", function(event) {
+		event.preventDefault();
+		comm.addComment($(this));
+	})
 }
 

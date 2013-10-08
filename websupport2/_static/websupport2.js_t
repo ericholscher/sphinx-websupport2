@@ -1,10 +1,203 @@
-comm = require('./comm')
-events = require('./events')
+/*
+ * websupport.js
+ * ~~~~~~~~~~~~~
+ *
+ * sphinx.websupport utilties for all documentation.
+ *
+ * :copyright: Copyright 2007-2011 by the Sphinx team, see AUTHORS.
+ * :license: BSD, see LICENSE for details.
+ *
+ */
 
-events.initEvents();
-comm.initOptions();
-comm.initMetaData();
-showComments();
+(function($) {
+  $.fn.autogrow = function() {
+    return this.each(function() {
+    var textarea = this;
+
+    $.fn.autogrow.resize(textarea);
+
+    $(textarea)
+      .focus(function() {
+        textarea.interval = setInterval(function() {
+          $.fn.autogrow.resize(textarea);
+        }, 500);
+      })
+      .blur(function() {
+        clearInterval(textarea.interval);
+      });
+    });
+  };
+
+  $.fn.autogrow.resize = function(textarea) {
+    var lineHeight = parseInt($(textarea).css('line-height'), 10);
+    var lines = textarea.value.split('\n');
+    var columns = textarea.cols;
+    var lineCount = 0;
+    $.each(lines, function() {
+      lineCount += Math.ceil(this.length / columns) || 1;
+    });
+    var height = lineHeight * (lineCount + 1);
+    $(textarea).css('height', height);
+  };
+})(jQuery);
+
+(function($) {
+  var comp, by;
+
+  function init() {
+    initEvents();
+    initComparator();
+    initOptions();
+    initMetaData();
+  }
+
+  function getServerData() {
+    var get_data = {};
+    // Try and figure out the page we're working on.
+    if (typeof page_name != "undefined") {
+        get_data["page_name"] = page_name
+    }
+    else {
+        get_data["page_name"] = window.location.pathname.substring(1)
+    }
+
+    // Read the Docs sets these variables above in the Javascript stack
+    if (typeof doc_version != "undefined" && typeof doc_slug != "undefined") {
+        get_data["version"] = doc_version
+        get_data["project"] = doc_slug
+    }
+    return get_data
+  }
+
+  function initMetaData() {
+    var get_data = getServerData()
+
+    $.ajax({
+     type: 'GET',
+     url: opts.metadataURL,
+     data: get_data,
+
+     success: function(data, textStatus, request) {
+        COMMENT_METADATA = data
+        // add comment anchors for all paragraphs that are commentable
+        $('.sphinx-has-comment').comment();
+
+     },
+     error: function(request, textStatus, error) {
+       showError('Oops, there was a problem retrieving comment metadata.');
+     },
+     dataType: 'jsonp'
+    });
+  }
+
+  function initOptions() {
+    var get_data = getServerData()
+
+    $.ajax({
+     type: 'GET',
+     url: opts.optionsURL,
+     data: get_data,
+     success: function(data, textStatus, request) {
+      COMMENT_OPTIONS = data
+     },
+     error: function(request, textStatus, error) {
+       showError('Oops, there was a problem retrieving the comment options.');
+     },
+     dataType: 'jsonp'
+    });
+  }
+
+  function initEvents() {
+    $('a.comment-close').live("click", function(event) {
+      event.preventDefault();
+      hide($(this).attr('id').substring(2));
+    });
+    $('a.vote').live("click", function(event) {
+      event.preventDefault();
+      handleVote($(this));
+    });
+    $('a.reply').live("click", function(event) {
+      event.preventDefault();
+      openReply($(this).attr('id').substring(2));
+    });
+    $('a.close-reply').live("click", function(event) {
+      event.preventDefault();
+      closeReply($(this).attr('id').substring(2));
+    });
+    $('a.sort-option').live("click", function(event) {
+      event.preventDefault();
+      handleReSort($(this));
+    });
+    $('a.show-proposal').live("click", function(event) {
+      event.preventDefault();
+      showProposal($(this).attr('id').substring(2));
+    });
+    $('a.hide-proposal').live("click", function(event) {
+      event.preventDefault();
+      hideProposal($(this).attr('id').substring(2));
+    });
+    $('a.show-propose-change').live("click", function(event) {
+      event.preventDefault();
+      showProposeChange($(this).attr('id').substring(2));
+    });
+    $('a.hide-propose-change').live("click", function(event) {
+      event.preventDefault();
+      hideProposeChange($(this).attr('id').substring(2));
+    });
+    $('a.accept-comment').live("click", function(event) {
+      event.preventDefault();
+      acceptComment($(this).attr('id').substring(2));
+    });
+    $('a.delete-comment').live("click", function(event) {
+      event.preventDefault();
+      deleteComment($(this).attr('id').substring(2));
+    });
+    $('a.comment-markup').live("click", function(event) {
+      event.preventDefault();
+      toggleCommentMarkupBox($(this).attr('id').substring(2));
+    });
+  }
+
+  /**
+   * Set comp, which is a comparator function used for sorting and
+   * inserting comments into the list.
+   */
+  function setComparator() {
+    // If the first three letters are "asc", sort in ascending order
+    // and remove the prefix.
+    if (by.substring(0,3) == 'asc') {
+      var i = by.substring(3);
+      comp = function(a, b) { return a[i] - b[i]; };
+    } else {
+      // Otherwise sort in descending order.
+      comp = function(a, b) { return b[by] - a[by]; };
+    }
+
+    // Reset link styles and format the selected sort option.
+    $('a.sel').attr('href', '#').removeClass('sel');
+    $('a.by' + by).removeAttr('href').addClass('sel');
+  }
+
+  /**
+   * Create a comp function. If the user has preferences stored in
+   * the sortBy cookie, use those, otherwise use the default.
+   */
+  function initComparator() {
+    by = 'rating'; // Default to sort by rating.
+    // If the sortBy cookie is set, use that instead.
+    if (document.cookie.length > 0) {
+      var start = document.cookie.indexOf('sortBy=');
+      if (start != -1) {
+        start = start + 7;
+        var end = document.cookie.indexOf(";", start);
+        if (end == -1) {
+          end = document.cookie.length;
+          by = unescape(document.cookie.substring(start, end));
+        }
+      }
+    }
+    setComparator();
+  }
 
   /**
    * Show a comment div.
@@ -22,11 +215,9 @@ showComments();
       addComment(form);
     });
     $('#s' + id).after(popup);
-    $(popup).pageslide();
-    getComments(id);
-    //popup.slideDown('fast', function() {
-      //getComments(id);
-    //});
+    popup.slideDown('fast', function() {
+      getComments(id);
+    });
   }
 
   /**
@@ -36,12 +227,49 @@ showComments();
     $('#ah' + id).hide();
     $('#ao' + id).show();
     var div = $('#sc' + id);
-    $(div).pageslide();
-    //div.slideUp('fast', function() {
-      //div.remove();
-    //});
+    div.slideUp('fast', function() {
+      div.remove();
+    });
   }
 
+  /**
+   * Perform an ajax request to get comments for a node
+   * and insert the comments into the comments tree.
+   */
+  function getComments(id) {
+    var get_data = getServerData();
+    get_data['node'] = id;
+
+    $.ajax({
+     type: 'GET',
+     url: opts.getCommentsURL,
+     data: get_data,
+     success: function(data, textStatus, request) {
+       var ul = $('#cl' + id);
+       var speed = 100;
+       $('#cf' + id)
+         .find('textarea[name="proposal"]')
+         .data('source', data.source);
+
+       if (data.comments.length === 0) {
+         ul.html('<li>No comments yet.</li>');
+         ul.data('empty', true);
+       } else {
+         // If there are comments, sort them and put them in the list.
+         var comments = sortComments(data.comments);
+         speed = data.comments.length * 100;
+         appendComments(comments, ul);
+         ul.data('empty', false);
+       }
+       $('#cn' + id).slideUp(speed + 200);
+       ul.slideDown(speed);
+     },
+     error: function(request, textStatus, error) {
+       showError('Oops, there was a problem retrieving the comments.');
+     },
+     dataType: 'jsonp'
+    });
+  }
 
   /**
    * Add a comment via ajax and insert the comment into the comment tree.
@@ -76,15 +304,6 @@ showComments();
       type: "POST",
       url: opts.addCommentURL,
       dataType: 'json',
-      crossDomain: true,
-      xhrFields: {
-        // The 'xhrFields' property sets additional fields on the XMLHttpRequest.
-        // This can be used to set the 'withCredentials' property.
-        // Set the value to 'true' if you'd like to pass cookies to the server.
-        // If this is enabled, your server must respond with the header
-        // 'Access-Control-Allow-Credentials: true'.
-        withCredentials: true,
-      },
       data: post_data,
       success: function(data, textStatus, error) {
         // Reset the form.
@@ -247,6 +466,27 @@ showComments();
     $('#mb' + id).toggle();
   }
 
+  /** Handle when the user clicks on a sort by link. */
+  function handleReSort(link) {
+    var classes = link.attr('class').split(/\s+/);
+    for (var i=0; i<classes.length; i++) {
+      if (classes[i] != 'sort-option') {
+    by = classes[i].substring(2);
+      }
+    }
+    setComparator();
+    // Save/update the sortBy cookie.
+    var expiration = new Date();
+    expiration.setDate(expiration.getDate() + 365);
+    document.cookie= 'sortBy=' + escape(by) +
+                     ';expires=' + expiration.toUTCString();
+    $('ul.comment-ul').each(function(index, ul) {
+      var comments = getChildren($(ul), true);
+      comments = sortComments(comments);
+      appendComments(comments, $(ul).empty());
+    });
+  }
+
   /**
    * Function to process a vote when a user clicks an arrow.
    */
@@ -352,6 +592,67 @@ showComments();
   }
 
   /**
+   * Recursively sort a tree of comments using the comp comparator.
+   */
+  function sortComments(comments) {
+    comments.sort(comp);
+    $.each(comments, function() {
+      this.children = sortComments(this.children);
+    });
+    return comments;
+  }
+
+  /**
+   * Get the children comments from a ul. If recursive is true,
+   * recursively include childrens' children.
+   */
+  function getChildren(ul, recursive) {
+    var children = [];
+    ul.children().children("[id^='cd']")
+      .each(function() {
+        var comment = $(this).data('comment');
+        if (recursive)
+          comment.children = getChildren($(this).find('#cl' + comment.id), true);
+        children.push(comment);
+      });
+    return children;
+  }
+
+  /** Create a div to display a comment in. */
+  function createCommentDiv(comment) {
+    if (!comment.displayed && !opts.moderator) {
+      return $('<div class="moderate">Thank you!  Your comment will show up '
+               + 'once it is has been approved by a moderator.</div>');
+    }
+    // Prettify the comment rating.
+    comment.pretty_rating = comment.rating + ' point' +
+      (comment.rating == 1 ? '' : 's');
+    // Make a class (for displaying not yet moderated comments differently)
+    comment.css_class = comment.displayed ? '' : ' moderate';
+    // Create a div for this comment.
+    var context = $.extend({}, opts, comment);
+    var div = $(renderTemplate(commentTemplate, context));
+
+    // If the user has voted on this comment, highlight the correct arrow.
+    if (comment.vote) {
+      var direction = (comment.vote == 1) ? 'u' : 'd';
+      div.find('#' + direction + 'v' + comment.id).hide();
+      div.find('#' + direction + 'u' + comment.id).show();
+    }
+
+    if (opts.moderator || comment.text != '[deleted]') {
+      div.find('a.reply').show();
+      if (comment.proposal_diff)
+        div.find('#sp' + comment.id).show();
+      if (opts.moderator && !comment.displayed)
+        div.find('#cm' + comment.id).show();
+      if (opts.moderator || (opts.username == comment.username))
+        div.find('#dc' + comment.id).show();
+    }
+    return div;
+  }
+
+  /**
    * A simple template renderer. Placeholders such as <%id%> are replaced
    * by context['id'] with items being escaped. Placeholders such as <#id#>
    * are not escaped.
@@ -388,4 +689,199 @@ showComments();
       .delay(2000)
       .fadeOut("slow");
   }
+
+  /** Add a link the user uses to open the comments popup. */
+  $.fn.comment = function() {
+    return this.each(function() {
+      var id = $(this).attr('id').substring(1);
+      var count = COMMENT_METADATA[id];
+      var title = count + ' comment' + (count == 1 ? '' : 's');
+      var image = count > 0 ? opts.commentBrightImage : opts.commentImage;
+      var addcls = count == 0 ? ' nocomment' : '';
+      $(this)
+        .append(
+          $(document.createElement('a')).attr({
+            href: '#',
+            'class': 'sphinx-comment-open' + addcls,
+            id: 'ao' + id
+          })
+            .append($(document.createElement('img')).attr({
+              src: image,
+              alt: 'comment',
+              title: title
+            }))
+            .click(function(event) {
+              event.preventDefault();
+              show($(this).attr('id').substring(2));
+            })
+        )
+        .append(
+          $(document.createElement('a')).attr({
+            href: '#',
+            'class': 'sphinx-comment-close hidden',
+            id: 'ah' + id
+          })
+            .append($(document.createElement('img')).attr({
+              src: opts.closeCommentImage,
+              alt: 'close',
+              title: 'close'
+            }))
+            .click(function(event) {
+              event.preventDefault();
+              hide($(this).attr('id').substring(2));
+            })
+        );
+    });
+  };
+
+  var baseURL = "{{ websupport2_base_url }}";
+  var staticURL = "{{ websupport2_static_url }}";
+
+  var opts = {
+    processVoteURL: baseURL + '/_process_vote',
+    addCommentURL: baseURL + '/_add_comment',
+    getCommentsURL: baseURL + '/_get_comments',
+    acceptCommentURL: baseURL + '/_accept_comment',
+    deleteCommentURL: baseURL + '/_delete_comment',
+    metadataURL: baseURL + '/_get_metadata',
+    optionsURL: baseURL + '/_get_options',
+
+    commentImage: staticURL + '/_static/comment.png',
+    closeCommentImage: staticURL + '/_static/comment-close.png',
+    loadingImage: staticURL + '/_static/ajax-loader.gif',
+    commentBrightImage: staticURL + '/_static/comment-bright.png',
+    upArrow: staticURL + '/_static/up.png',
+    downArrow: staticURL + '/_static/down.png',
+    upArrowPressed: staticURL + '/_static/up-pressed.png',
+    downArrowPressed: staticURL + '/_static/down-pressed.png',
+
+    voting: false,
+    moderator: false
+  };
+
+  if (typeof COMMENT_OPTIONS != "undefined") {
+    opts = jQuery.extend(opts, COMMENT_OPTIONS);
+  }
+
+  var popupTemplate = '\
+    <div class="sphinx-comments" id="sc<%id%>">\
+      <p class="sort-options">\
+        Sort by:\
+        <a href="#" class="sort-option byrating">best rated</a>\
+        <a href="#" class="sort-option byascage">newest</a>\
+        <a href="#" class="sort-option byage">oldest</a>\
+      </p>\
+      <div class="comment-header">Comments</div>\
+      <div class="comment-loading" id="cn<%id%>">\
+        loading comments... <img src="<%loadingImage%>" alt="" /></div>\
+      <ul id="cl<%id%>" class="comment-ul"></ul>\
+      <div id="ca<%id%>">\
+      <p class="add-a-comment">Add a comment\
+        (<a href="#" class="comment-markup" id="ab<%id%>">markup</a>):</p>\
+      <div class="comment-markup-box" id="mb<%id%>">\
+        reStructured text markup: <i>*emph*</i>, <b>**strong**</b>, \
+        <tt>``code``</tt>, \
+        code blocks: <tt>::</tt> and an indented block after blank line</div>\
+      <form method="post" id="cf<%id%>" class="comment-form" action="">\
+        <textarea name="comment" cols="80"></textarea>\
+        <p class="propose-button">\
+          <a href="#" id="pc<%id%>" class="show-propose-change">\
+            Propose a change &#9657;\
+          </a>\
+          <a href="#" id="hc<%id%>" class="hide-propose-change">\
+            Propose a change &#9663;\
+          </a>\
+        </p>\
+        <textarea name="proposal" id="pt<%id%>" cols="80"\
+                  spellcheck="false"></textarea>\
+        <input type="submit" value="Add comment" />\
+        <input type="hidden" name="node" value="<%id%>" />\
+        <input type="hidden" name="parent" value="" />\
+      </form>\
+      </div>\
+    </div>';
+
+  var commentTemplate = '\
+    <div id="cd<%id%>" class="sphinx-comment<%css_class%>">\
+      <div class="vote">\
+        <div class="arrow">\
+          <a href="#" id="uv<%id%>" class="vote" title="vote up">\
+            <img src="<%upArrow%>" />\
+          </a>\
+          <a href="#" id="uu<%id%>" class="un vote" title="vote up">\
+            <img src="<%upArrowPressed%>" />\
+          </a>\
+        </div>\
+        <div class="arrow">\
+          <a href="#" id="dv<%id%>" class="vote" title="vote down">\
+            <img src="<%downArrow%>" id="da<%id%>" />\
+          </a>\
+          <a href="#" id="du<%id%>" class="un vote" title="vote down">\
+            <img src="<%downArrowPressed%>" />\
+          </a>\
+        </div>\
+      </div>\
+      <div class="comment-content">\
+        <p class="tagline comment">\
+          <span class="user-id"><%username%></span>\
+          <span class="rating"><%pretty_rating%></span>\
+          <span class="delta"><%time.delta%></span>\
+        </p>\
+        <div class="comment-text comment"><#text#></div>\
+        <p class="comment-opts comment">\
+          <a href="#" class="reply hidden" id="rl<%id%>">reply &#9657;</a>\
+          <a href="#" class="close-reply" id="cr<%id%>">reply &#9663;</a>\
+          <a href="#" id="sp<%id%>" class="show-proposal">proposal &#9657;</a>\
+          <a href="#" id="hp<%id%>" class="hide-proposal">proposal &#9663;</a>\
+          <a href="#" id="dc<%id%>" class="delete-comment hidden">delete</a>\
+          <span id="cm<%id%>" class="moderation hidden">\
+            <a href="#" id="ac<%id%>" class="accept-comment">accept</a>\
+          </span>\
+        </p>\
+        <pre class="proposal" id="pr<%id%>">\
+<#proposal_diff#>\
+        </pre>\
+          <ul class="comment-children" id="cl<%id%>"></ul>\
+        </div>\
+        <div class="clearleft"></div>\
+      </div>\
+    </div>';
+
+  var replyTemplate = '\
+    <li>\
+      <div class="reply-div" id="rd<%id%>">\
+        <form id="rf<%id%>">\
+          <textarea name="comment" cols="80"></textarea>\
+          <input type="submit" value="Add reply" />\
+          <input type="button" value="Cancel" />\
+          <input type="hidden" name="parent" value="<%id%>" />\
+          <input type="hidden" name="node" value="" />\
+        </form>\
+      </div>\
+    </li>';
+
+  $(document).ready(function() {
+    init();
+  });
+})(jQuery);
+
+$(document).ready(function() {
+
+  // highlight search words in search results
+  $("div.context").each(function() {
+    var params = $.getQueryParameters();
+    var terms = (params.q) ? params.q[0].split(/\s+/) : [];
+    var result = $(this);
+    $.each(terms, function() {
+      result.highlightText(this.toLowerCase(), 'highlighted');
+    });
+  });
+
+  // directly open comment window if requested
+  var anchor = document.location.hash;
+  if (anchor.substring(0, 9) == '#comment-') {
+    $('#ao' + anchor.substring(9)).click();
+    document.location.hash = '#s' + anchor.substring(9);
+  }
+});
 

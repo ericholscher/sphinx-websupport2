@@ -1,17 +1,20 @@
 ;(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 comm = require('./lib/comm')
 events = require('./lib/events')
+display = require('./lib/display')
 
-events.initEvents();
-comm.initOptions();
-comm.initMetaData();
-comm.getComments()
+$(document).ready(function () {
+	events.initEvents();
+	comm.initOptions();
+	comm.initMetaData();
+	display.initDisplay();
+})
 
 
-},{"./lib/comm":2,"./lib/events":3}],2:[function(require,module,exports){
+},{"./lib/comm":2,"./lib/display":3,"./lib/events":4}],2:[function(require,module,exports){
 module.exports = {
   initMetaData: initMetaData,
-  getComments: getComments,
+  addComment: addComment,
   initOptions: initOptions
 }
 
@@ -24,26 +27,6 @@ function getServerData(format) {
     "version":  page.version,
     "page": page.page
   }
-}
-
-function initMetaData() {
-  var get_data = getServerData()
-
-  $.ajax({
-   type: 'GET',
-   url: settings.opts.metadataURL,
-   data: get_data,
-   crossDomain: true,
-   xhrFields: {
-     withCredentials: true,
-   },
-   success: function(data, textStatus, request) {
-      settings.metadata = data
-   },
-   error: function(request, textStatus, error) {
-     showError('Oops, there was a problem retrieving comment metadata.');
-   },
-  });
 }
 
 function initOptions() {
@@ -66,44 +49,33 @@ function initOptions() {
   });
 }
 
-function getComments() {
+
+function initMetaData() {
   var get_data = getServerData()
-  get_data['node'] = id;
 
   $.ajax({
    type: 'GET',
-   url: opts.getCommentsURL,
+   url: settings.opts.metadataURL,
    data: get_data,
    crossDomain: true,
    xhrFields: {
      withCredentials: true,
    },
-   success: handleComments,
-   error: function(request, textStatus, error) {
-     showError('Oops, there was a problem retrieving the comments.');
+   success: function(data) {
+      settings.metadata = data
+      displayCommentIcon()
    },
-   dataType: 'json'
+   error: function(request, textStatus, error) {
+     showError('Oops, there was a problem retrieving comment metadata.');
+   },
   });
-
 }
 
-function handleComments(data) {
-   if (data.comments.length === 0) {
-      console.log("No comments")
-   } else {
-     displayCommentIcon(data.comments)
-   }
-}
-
-function displayCommentIcon(data) {
-  // Cache stuff
-  cached_comments = true
-  cached_comment_data = data
+function displayCommentIcon() {
   // Only show data on the toc trees
-  for (index in top_list) {
-      obj = top_list[index]
-      var id = obj['id']
-      var count = settings.metadata[id];
+  for (id in settings.metadata) {
+      count = settings.metadata[id]
+      console.log(id + ": " + count)
       var title = count + ' comment' + (count == 1 ? '' : 's');
       var image = count > 0 ? settings.opts.commentBrightImage : settings.opts.commentImage;
       addCommentIcon(id, title, image)
@@ -118,11 +90,11 @@ function addCommentIcon(id, title, image) {
           'class': 'sphinx-comment-open',
           id: 'comment-open-' + id
         })
-          .append($(document.createElement('img')).attr({
-            src: image,
-            alt: 'comment',
-            title: title
-          }))
+        .append($(document.createElement('img')).attr({
+          src: image,
+          alt: 'comment',
+          title: title
+        }))
 
       )
       .append(
@@ -131,45 +103,175 @@ function addCommentIcon(id, title, image) {
           'class': 'sphinx-comment-close hidden',
           id: 'comment-close-' + id
         })
-          .append($(document.createElement('img')).attr({
-            src: settings.opts.closeCommentImage,
-            alt: 'close',
-            title: 'close'
-          }))
+        .append($(document.createElement('img')).attr({
+          src: settings.opts.closeCommentImage,
+          alt: 'close',
+          title: 'close'
+        }))
       );
 }
 
-},{"./page":4,"./settings":5}],3:[function(require,module,exports){
+
+function addComment(form) {
+  var node_id = form.find('input[name="node"]').val();
+  var text = form.find('textarea[name="comment"]').val();
+
+  if (text == '') {
+    showError('Please enter a comment.');
+    return;
+  }
+
+  // Disable the form that is being submitted.
+  form.find('textarea,input').attr('disabled', 'disabled');
+
+
+  var server_data = getServerData();
+  var comment_data = {
+      node: node_id,
+      text: text,
+    };
+  var post_data = $.extend(server_data, comment_data)
+
+
+  // Send the comment to the server.
+  $.ajax({
+    type: "POST",
+    url: settings.opts.addCommentURL,
+    dataType: 'json',
+    data: post_data,
+    success: function(data, textStatus, error) {
+      form.find('textarea')
+        .val('')
+        .add(form.find('input'))
+        .removeAttr('disabled');
+      //insertComment(data.comment);
+      var comment_element = $('#' + node_id);
+      comment_element.find('img').attr({'src': settings.opts.commentBrightImage});
+    },
+    error: function(request, textStatus, error) {
+      form.find('textarea,input').removeAttr('disabled');
+      showError('Oops, there was a problem adding the comment.');
+    }
+  });
+}
+
+
+
+},{"./page":5,"./settings":6}],3:[function(require,module,exports){
+module.exports = {
+    initDisplay: initDisplay,
+    displayComments: displayComments,
+    closeComments: closeComments
+}
+
+function initDisplay() {
+    $('body').append("<div id='current-comment'></div>");
+}
+
+function closeComments() {
+  $.pageslide.close()
+}
+
+function displayComments(id) {
+  get_data = {
+    'node': id
+  }
+
+  $.ajax({
+   type: 'GET',
+   url: settings.opts.getCommentsURL,
+   data: get_data,
+   crossDomain: true,
+   xhrFields: {
+     withCredentials: true,
+   },
+   success: function(data) {
+       handleComments(id, data)
+
+   },
+   error: function(request, textStatus, error) {
+     showError('Oops, there was a problem retrieving the comments.');
+   },
+   dataType: 'json'
+  });
+}
+
+
+function handleComments(id, data) {
+    showComments(id, data.comments)
+}
+
+
+
+function showComments(id, comment_data) {
+  $('#current-comment').html("<h1> Comments </h1>")
+  for (index in comment_data) {
+      obj = comment_data[index]
+      console.log(obj)
+      to_append = "<span class='comment'>"
+      to_append += obj['date'] + "<br>"
+      to_append += obj['text']
+      $("#current-comment").append(to_append)
+  }
+  var reply = '\
+      <div class="reply-div" id="comment-reply-' + id + '>">\
+        <form class= "comment-reply-form" id="comment-reply-form-' + id + '">\
+          <textarea name="comment" cols="40"></textarea>\
+          <input type="submit" value="Add Comment" />\
+          <input type="hidden" name="node" value="' + id + '" />\
+        </form>\
+      </div>'
+
+  $("#current-comment").append(reply)
+  $.pageslide({direction: 'left', href:'#current-comment' })
+}
+
+// Don't need this since its in the page.
+
+/*
+function setUpPageslide() {
+    $.ajax({
+        url: "https://api.grokthedocs.com/static/javascript/pageslide/jquery.pageslide.js",
+        crossDomain: true,
+        dataType: "script",
+        cache: true,
+        success: function () {
+            console.log("Loaded pageslide")
+            $('head').append('<link rel="stylesheet" href="https://api.grokthedocs.com/static/css/top.css" type="text/css" />');
+            $('body').append("<div id='gtd-top'></div>");
+        },
+        error: function (e) {
+            console.log("OMG FAIL:" + e)
+        }
+
+    });
+}
+*/
+},{}],4:[function(require,module,exports){
 module.exports = {
 	initEvents: initEvents
 }
 
+display = require('./display')
+
 function initEvents() {
 	$(document).on("click", "a.sphinx-comment-open", function(event) {
 		event.preventDefault();
-		displayComment($(this).attr('id').substring('comment-open-'.length));
+		display.displayComments($(this).attr('id').substring('comment-open-'.length));
 	})
 	$(document).on("click", "a.sphinx-comment-close", function(event) {
 		event.preventDefault();
-		closeComment($(this).attr('id').substring('comment-close-'.length));
+		display.closeComments($(this).attr('id').substring('comment-close-'.length));
 	})
 
-	$('a.reply').live("click", function(event) {
-	  event.preventDefault();
-	  openReply($(this).attr('id').substring(2));
-	});
-	$('a.close-reply').live("click", function(event) {
-	  event.preventDefault();
-	  closeReply($(this).attr('id').substring(2));
-	});
-	$('a.comment-markup').live("click", function(event) {
-	  event.preventDefault();
-	  toggleCommentMarkupBox($(this).attr('id').substring(2));
-	});
+	$(document).on("submit", ".comment-reply-form", function(event) {
+		event.preventDefault();
+		comm.addComment($(this));
+	})
 }
 
 
-},{}],4:[function(require,module,exports){
+},{"./display":3}],5:[function(require,module,exports){
 // Module exporting page-level variables for easy use
 module.exports = {
 	project: doc_slug,
@@ -188,12 +290,7 @@ function getPageName() {
 	}
 }
 
-},{}],5:[function(require,module,exports){
-module.exports = {
-  metadata: metadata,
-  opts: opts
-}
-
+},{}],6:[function(require,module,exports){
 var baseURL = "{{ websupport2_base_url }}";
 var staticURL = "{{ websupport2_static_url }}";
 
@@ -220,6 +317,14 @@ var opts = {
   voting: false,
   moderator: false
 };
+
+
+module.exports = {
+  metadata: metadata,
+  opts: opts,
+  staticURL: staticURL
+}
+
 
 },{}]},{},[1])
 ;

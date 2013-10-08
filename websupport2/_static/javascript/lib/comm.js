@@ -1,6 +1,6 @@
 module.exports = {
   initMetaData: initMetaData,
-  getComments: getComments,
+  addComment: addComment,
   initOptions: initOptions
 }
 
@@ -13,26 +13,6 @@ function getServerData(format) {
     "version":  page.version,
     "page": page.page
   }
-}
-
-function initMetaData() {
-  var get_data = getServerData()
-
-  $.ajax({
-   type: 'GET',
-   url: settings.opts.metadataURL,
-   data: get_data,
-   crossDomain: true,
-   xhrFields: {
-     withCredentials: true,
-   },
-   success: function(data, textStatus, request) {
-      settings.metadata = data
-   },
-   error: function(request, textStatus, error) {
-     showError('Oops, there was a problem retrieving comment metadata.');
-   },
-  });
 }
 
 function initOptions() {
@@ -55,44 +35,33 @@ function initOptions() {
   });
 }
 
-function getComments() {
+
+function initMetaData() {
   var get_data = getServerData()
-  get_data['node'] = id;
 
   $.ajax({
    type: 'GET',
-   url: opts.getCommentsURL,
+   url: settings.opts.metadataURL,
    data: get_data,
    crossDomain: true,
    xhrFields: {
      withCredentials: true,
    },
-   success: handleComments,
-   error: function(request, textStatus, error) {
-     showError('Oops, there was a problem retrieving the comments.');
+   success: function(data) {
+      settings.metadata = data
+      displayCommentIcon()
    },
-   dataType: 'json'
+   error: function(request, textStatus, error) {
+     showError('Oops, there was a problem retrieving comment metadata.');
+   },
   });
-
 }
 
-function handleComments(data) {
-   if (data.comments.length === 0) {
-      console.log("No comments")
-   } else {
-     displayCommentIcon(data.comments)
-   }
-}
-
-function displayCommentIcon(data) {
-  // Cache stuff
-  cached_comments = true
-  cached_comment_data = data
+function displayCommentIcon() {
   // Only show data on the toc trees
-  for (index in top_list) {
-      obj = top_list[index]
-      var id = obj['id']
-      var count = settings.metadata[id];
+  for (id in settings.metadata) {
+      count = settings.metadata[id]
+      console.log(id + ": " + count)
       var title = count + ' comment' + (count == 1 ? '' : 's');
       var image = count > 0 ? settings.opts.commentBrightImage : settings.opts.commentImage;
       addCommentIcon(id, title, image)
@@ -107,11 +76,11 @@ function addCommentIcon(id, title, image) {
           'class': 'sphinx-comment-open',
           id: 'comment-open-' + id
         })
-          .append($(document.createElement('img')).attr({
-            src: image,
-            alt: 'comment',
-            title: title
-          }))
+        .append($(document.createElement('img')).attr({
+          src: image,
+          alt: 'comment',
+          title: title
+        }))
 
       )
       .append(
@@ -120,10 +89,56 @@ function addCommentIcon(id, title, image) {
           'class': 'sphinx-comment-close hidden',
           id: 'comment-close-' + id
         })
-          .append($(document.createElement('img')).attr({
-            src: settings.opts.closeCommentImage,
-            alt: 'close',
-            title: 'close'
-          }))
+        .append($(document.createElement('img')).attr({
+          src: settings.opts.closeCommentImage,
+          alt: 'close',
+          title: 'close'
+        }))
       );
 }
+
+
+function addComment(form) {
+  var node_id = form.find('input[name="node"]').val();
+  var text = form.find('textarea[name="comment"]').val();
+
+  if (text == '') {
+    showError('Please enter a comment.');
+    return;
+  }
+
+  // Disable the form that is being submitted.
+  form.find('textarea,input').attr('disabled', 'disabled');
+
+
+  var server_data = getServerData();
+  var comment_data = {
+      node: node_id,
+      text: text,
+    };
+  var post_data = $.extend(server_data, comment_data)
+
+
+  // Send the comment to the server.
+  $.ajax({
+    type: "POST",
+    url: settings.opts.addCommentURL,
+    dataType: 'json',
+    data: post_data,
+    success: function(data, textStatus, error) {
+      form.find('textarea')
+        .val('')
+        .add(form.find('input'))
+        .removeAttr('disabled');
+      //insertComment(data.comment);
+      var comment_element = $('#' + node_id);
+      comment_element.find('img').attr({'src': settings.opts.commentBrightImage});
+    },
+    error: function(request, textStatus, error) {
+      form.find('textarea,input').removeAttr('disabled');
+      showError('Oops, there was a problem adding the comment.');
+    }
+  });
+}
+
+

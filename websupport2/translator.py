@@ -28,7 +28,7 @@ class UUIDTranslator(HTMLTranslator):
         if node.attributes['ids']:
             self.body.append('<span id="%s"></span>'
                              % node.attributes['ids'][0])
-        node.attributes['ids'] = ['s%s' % node.uid]
+        node.attributes['ids'] = ['%s' % node.uid]
         node.attributes['classes'].append(self.comment_class)
 
     def add_db_node(self, node):

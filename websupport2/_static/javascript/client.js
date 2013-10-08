@@ -1,8 +1,11 @@
 comm = require('./lib/comm')
 events = require('./lib/events')
+display = require('./lib/display')
 
-events.initEvents();
-comm.initOptions();
-comm.initMetaData();
-comm.getComments()
+$(document).ready(function () {
+	events.initEvents();
+	comm.initOptions();
+	comm.initMetaData();
+	display.initDisplay();
+})
 
