@@ -16,6 +16,7 @@ module.exports = {
 }
 
 settings = require('./settings')
+page = require('./page')
 
 function getServerData(format) {
   return {
@@ -138,7 +139,7 @@ function addCommentIcon(id, title, image) {
       );
 }
 
-},{"./settings":4}],3:[function(require,module,exports){
+},{"./page":4,"./settings":5}],3:[function(require,module,exports){
 module.exports = {
 	initEvents: initEvents
 }
@@ -169,6 +170,25 @@ function initEvents() {
 
 
 },{}],4:[function(require,module,exports){
+// Module exporting page-level variables for easy use
+module.exports = {
+	project: doc_slug,
+	version: doc_version,
+	page: getPageName()
+}
+
+function getPageName() {
+	if (typeof page_name != "undefined") {
+	  return page_name
+	} else {
+	  stripped = window.location.pathname.substring(1)
+	  stripped = stripped.replace(".html", "")
+	  stripped = stripped.replace(/\/$/, "")
+	  return stripped
+	}
+}
+
+},{}],5:[function(require,module,exports){
 module.exports = {
   metadata: metadata,
   opts: opts

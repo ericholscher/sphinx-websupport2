@@ -5,6 +5,7 @@ module.exports = {
 }
 
 settings = require('./settings')
+page = require('./page')
 
 function getServerData(format) {
   return {
