@@ -170,6 +170,7 @@ module.exports = {
 
 function initDisplay() {
     $('body').append("<div id='current-comment'></div>");
+    $('body').append("<div id='pageslide'></div>");
 }
 
 function closeComments() {
